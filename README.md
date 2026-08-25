@@ -1,3 +1,5 @@
+# `db` — clientes de bases de datos (paquete adicional, **no** embebido)
+
 > **Espejo de solo lectura** — publicado desde
 > [`raylang/packages/db`](https://github.com/roberto-ayala/raylang/tree/main/packages/db);
 > el desarrollo y los PRs van al monorepo.
@@ -12,7 +14,6 @@
 > y `ray add db` — o la dependencia directa:
 > `db = "git+https://github.com/ray-language/db@v0.1.0"`.
 
-# `db` — clientes de bases de datos (paquete adicional, **no** embebido)
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
 `std/crypto`. Tier 2 del ecosistema (paquete adicional; la política de tiers está en
@@ -20,7 +21,7 @@ Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net
 
 ## Cómo usarlo
 
-Declara el paquete en tu `ray.toml` como dependencia por ruta (o git):
+Declara el paquete en tu `ray.toml` (por ruta en el monorepo; git desde el espejo publicado):
 
 ```toml
 [dependencies]
