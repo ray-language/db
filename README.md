@@ -1,7 +1,7 @@
 # `db` — clientes de bases de datos (paquete adicional, **no** embebido)
 
 > **Espejo de solo lectura** — publicado desde
-> [`raylang/packages/db`](https://github.com/roberto-ayala/raylang/tree/main/packages/db);
+> [`raylang/packages/db`](https://github.com/ray-language/raylang/tree/main/packages/db);
 > el desarrollo y los PRs van al monorepo.
 >
 > **Instalación** — en tu `ray.toml`:
