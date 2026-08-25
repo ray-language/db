@@ -1,13 +1,16 @@
 > **Espejo de solo lectura** — publicado desde
-> [\](https://github.com/roberto-ayala/raylang/tree/main/packages/db);
+> [`raylang/packages/db`](https://github.com/roberto-ayala/raylang/tree/main/packages/db);
 > el desarrollo y los PRs van al monorepo.
 >
-> **Instalación** — en tu \:
+> **Instalación** — en tu `ray.toml`:
 >
-> \\\
+> ```toml
+> [registry]
+> index = "git+https://github.com/ray-language/ray-index@main"
+> ```
 >
-> y \ — o la dependencia directa:
-> \.
+> y `ray add db` — o la dependencia directa:
+> `db = "git+https://github.com/ray-language/db@v0.1.0"`.
 
 # `db` — clientes de bases de datos (paquete adicional, **no** embebido)
 
