@@ -1,3 +1,14 @@
+> **Espejo de solo lectura** — publicado desde
+> [\](https://github.com/roberto-ayala/raylang/tree/main/packages/db);
+> el desarrollo y los PRs van al monorepo.
+>
+> **Instalación** — en tu \:
+>
+> \\\
+>
+> y \ — o la dependencia directa:
+> \.
+
 # `db` — clientes de bases de datos (paquete adicional, **no** embebido)
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -10,7 +21,7 @@ Declara el paquete en tu `ray.toml` como dependencia por ruta (o git):
 
 ```toml
 [dependencies]
-db = "path:../ruta/a/packages/db"
+db = "git+https://github.com/ray-language/db@v0.1.0"
 ```
 
 ## Módulos
@@ -19,7 +30,7 @@ db = "path:../ruta/a/packages/db"
 
 Cliente del protocolo wire de MySQL (handshake v10 + `COM_QUERY` en protocolo de texto):
 
-```raylang
+```rust
 import db/mysql;
 
 fn main() -> int {
@@ -64,7 +75,7 @@ Cliente del protocolo wire v3 de PostgreSQL con **conexión persistente**, auten
 Sync) — que trae **parámetros** (`$1`, `$2`, … enlazados aparte del SQL → anti-inyección) y devuelve
 **todas** las filas:
 
-```raylang
+```rust
 import db/postgres;
 
 fn main() -> int {
@@ -105,7 +116,7 @@ en raylang puro), SQLite es una librería C: los primitivos `__sqlite_*` viven e
 statements y destructores de bind). SQLite va **compilado dentro del binario** (`bundled`): cero
 dependencias del sistema.
 
-```raylang
+```rust
 import db/sqlite;
 
 fn main() -> int {
@@ -142,7 +153,7 @@ MongoDB (M54, en curso). `enum Bson` recursivo (`Double`/`Str`/`Doc`/`Arr`/`Bin`
 `Null`/`Int`) + `encode(doc) -> bytes` y `decode(bytes) -> Result<[Field], string>` (errores como
 valores, con la posición del octeto) + `dump` (repr JSON-ish para depurar).
 
-```raylang
+```rust
 import db/bson;
 
 let doc = [bson.field("hello", bson.Bson.Str("world"))];
@@ -169,7 +180,7 @@ Cliente MongoDB en raylang puro sobre `db/bson`: framing **OP_MSG** (opCode 2013
 (reusa `net/scram`, el mismo mecanismo que PostgreSQL; verifica la firma del servidor), CRUD
 completo y `run_command(c, doc)` para cualquier otro comando.
 
-```raylang
+```rust
 import db/mongo;
 import db/bson;
 
