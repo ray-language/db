@@ -4,15 +4,16 @@
 > [`raylang/packages/db`](https://github.com/ray-language/raylang/tree/main/packages/db);
 > el desarrollo y los PRs van al monorepo.
 >
-> **Instalación** — en tu `ray.toml`:
+> **Instalación** — `ray add db` en tu proyecto (el índice oficial va por defecto), o a
+> mano en `ray.toml`:
 >
 > ```toml
-> [registry]
-> index = "git+https://github.com/ray-language/ray-index@main"
+> [dependencies]
+> db = "^0.1.1"
 > ```
 >
-> y `ray add db` — o la dependencia directa:
-> `db = "git+https://github.com/ray-language/db@v0.1.0"`.
+> Sin índice, la dependencia git directa:
+> `db = "git+https://github.com/ray-language/db@v0.1.1"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -25,7 +26,7 @@ Declara el paquete en tu `ray.toml` (por ruta en el monorepo; git desde el espej
 
 ```toml
 [dependencies]
-db = "git+https://github.com/ray-language/db@v0.1.0"
+db = "git+https://github.com/ray-language/db@v0.1.1"
 ```
 
 ## Módulos
@@ -60,9 +61,12 @@ fn main() -> int {
 - **API**: `connect(host, port, user, password, database) -> Result<Conn, string>` ·
   `query(c, sql, params) -> Result<[[string]], string>` (filas como texto; `NULL` → `""`) ·
   `exec(c, sql, params) -> Result<int, string>` (filas afectadas) · `disconnect(c)`.
-- **Auth**: `mysql_native_password` (completa) y `caching_sha2_password` — el **fast-path** por
-  cualquier conexión, y el **full-path** vía `connect_tls` (la contraseña en claro viaja solo
-  dentro del canal cifrado). Con `connect` plano y caché fría, error claro con el remedio.
+- **Auth**: `mysql_native_password` (completa) y `caching_sha2_password` (el plugin por defecto
+  de MySQL 8.x) — el **fast-path** por cualquier conexión, y el **full-path** tanto por
+  `connect_tls` (la contraseña en claro viaja dentro del canal cifrado) como por `connect` en
+  claro (M309: intercambio RSA del protocolo — clave pública del servidor + RSA-OAEP/SHA-1 en
+  raylang puro, sobre `std/bigint`). Un `mysql:8.4` recién creado, sin caché y sin TLS, entra
+  sin `--mysql-native-password` ni usuarios especiales.
 - **TLS**: `connect_tls(...)` (mismos parámetros) — SSLRequest a mitad del handshake, upgrade del
   mismo socket (`net.tls_upgrade`, cert verificado contra `host`) y el resto de la sesión cifrada.
 - **Parámetros**: `query(c, sql, params)` / `exec(c, sql, params)` — con `params` la sentencia se
@@ -208,6 +212,15 @@ mongo.disconnect(c);
   `tls_connect` + la misma sesión (cert verificado contra `host`).
 - **Fechas**: `Bson.Date` (epoch-ms; `dump` la muestra como ISO 8601) y `Bson.Timestamp` (interno)
   se decodifican/codifican; una colección real con fechas ya no da "tipo no soportado".
+- **Sin auth** (M309): con `user = ""` la sesión se abre tras el `hello`, sin SCRAM — un servidor
+  de desarrollo o un contenedor sin `--auth`.
+- **MongoDB 6+** (M309): el `saslContinue` lleva `conversationId` como int32 (`Bson.Int32`, solo
+  para codificar: lo decodificado sigue llegando como `Int`) y el intercambio se cierra con el
+  `saslContinue` vacío que el servidor pide hasta `done: true`. Verificado contra mongod 8.3.
+- **Errores de escritura**: `insert`/`update`/`delete` devuelven `Err("mongo: E11000 duplicate
+  key …")` cuando la respuesta trae `writeErrors` (antes un duplicado era `Ok(0)`).
+- `run_command(c, doc)`: el documento debe llevar `$db` (`bson.field("$db", bson.Bson.Str(db))`),
+  como cualquier comando OP_MSG — `createIndexes`, `drop`, `aggregate`…
 - **Diferido**: Decimal128, `batchSize`/`killCursors`, compresión OP_COMPRESSED, Extended JSON.
 
 ## Verificación
