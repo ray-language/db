@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.1.1"
+> db = "^0.1.2"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.1.1"`.
+> `db = "git+https://github.com/ray-language/db@v0.1.2"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -26,14 +26,16 @@ Declara el paquete en tu `ray.toml` (por ruta en el monorepo; git desde el espej
 
 ```toml
 [dependencies]
-db = "git+https://github.com/ray-language/db@v0.1.1"
+db = "git+https://github.com/ray-language/db@v0.1.2"
 ```
 
 ## Módulos
 
 ### `db/mysql` (M53.1)
 
-Cliente del protocolo wire de MySQL (handshake v10 + `COM_QUERY` en protocolo de texto):
+Cliente del protocolo wire de MySQL (handshake v10 + `COM_QUERY` en protocolo de texto). Desde
+0.1.2 el búfer de lectura es `bytes` y se compacta: una conexión de larga vida (un pool) ya no
+retiene lo que leyó.
 
 ```rust
 import db/mysql;
