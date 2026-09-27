@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.1.2"
+> db = "^0.2.0"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.1.2"`.
+> `db = "git+https://github.com/ray-language/db@v0.2.0"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -26,7 +26,7 @@ Declara el paquete en tu `ray.toml` (por ruta en el monorepo; git desde el espej
 
 ```toml
 [dependencies]
-db = "git+https://github.com/ray-language/db@v0.1.2"
+db = "git+https://github.com/ray-language/db@v0.2.0"
 ```
 
 ## Módulos
@@ -63,6 +63,13 @@ fn main() -> int {
 - **API**: `connect(host, port, user, password, database) -> Result<Conn, string>` ·
   `query(c, sql, params) -> Result<[[string]], string>` (filas como texto; `NULL` → `""`) ·
   `exec(c, sql, params) -> Result<int, string>` (filas afectadas) · `disconnect(c)`.
+- **Pool** (M318, findings #68): `pool(host, port, user, password, database, size) -> Pool` (o
+  `pool_tls`) · `pool_query(p, sql, params)` (reintenta una vez sobre una conexión fresca si la
+  reutilizada falla por el cable — un servidor reiniciado sana solo) · `pool_exec` (sin reintento)
+  · `pool_with(p, f)` (una conexión para todo `f`) · `pool_tx(p, f)` (BEGIN/COMMIT/ROLLBACK) ·
+  `pool_close(p)`. El pool viaja por un canal (`net/pool`), así que se comparte entre las fibras
+  de un servidor aunque no compartan heap: abrir una conexión por petición agota los puertos
+  efímeros (~470 conexiones/s por par de hosts) y paga el handshake cada vez.
 - **Auth**: `mysql_native_password` (completa) y `caching_sha2_password` (el plugin por defecto
   de MySQL 8.x) — el **fast-path** por cualquier conexión, y el **full-path** tanto por
   `connect_tls` (la contraseña en claro viaja dentro del canal cifrado) como por `connect` en
@@ -107,7 +114,10 @@ fn main() -> int {
 
 - **API**: `connect(host, port, user, password, database, nonce) -> Result<Conn, string>` ·
   `query(c, sql, params) -> Result<[[string]], string>` · `exec(c, sql, params) -> Result<int, string>`
-  (filas afectadas) · `disconnect(c)`. Las **transacciones** son SQL corriente (`exec(c, "BEGIN", [])`
+  (filas afectadas) · `disconnect(c)` · **Pool** (M318): `pool`/`pool_tls(host, port, user, password,
+  database, size)`, `pool_query` (reintento único si la conexión reutilizada falla por el cable),
+  `pool_exec`, `pool_with(p, f)`, `pool_tx(p, f)`, `pool_close` — el pool genera el `nonce` SCRAM
+  de cada conexión. Las **transacciones** son SQL corriente (`exec(c, "BEGIN", [])`
   / `"COMMIT"` / `"ROLLBACK"`).
 - **Parámetros** en formato texto (v1); usa `$1`, `$2`, … en el SQL. `nonce` = nonce del cliente
   (aleatorio en producción). El cliente de una-consulta de `net/postgres` (protocolo simple) se
@@ -203,6 +213,14 @@ let set = [bson.field("$set", bson.Bson.Doc([bson.field("nota", bson.Bson.Int(37
 let _ = mongo.update(c, "usuarios", filter, set, false);  // Result<int> (nModified)
 let _ = mongo.delete(c, "usuarios", filter);        // Result<int> (n)
 mongo.disconnect(c);
+```
+
+**Pool** (M318): `pool`/`pool_tls(host, port, user, password, database, size)` · `pool_find(p, coll,
+filter)` (reintento único si la conexión reutilizada falla por el cable) · `pool_insert` /
+`pool_run_command` (sin reintento) · `pool_with(p, f)` (una conexión para todo `f`: `update`,
+`delete`, varias operaciones de una sesión) · `pool_close(p)`.
+
+```rust
 ```
 
 - Los filtros y documentos son **BSON estructurado** (`[bson.Field]`), no strings → anti-inyección
