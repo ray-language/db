@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.3.0"
+> db = "^0.4.0"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.3.0"`.
+> `db = "git+https://github.com/ray-language/db@v0.4.0"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -140,6 +140,13 @@ fn main() -> int {
   sobre el canal cifrado. `connect` = nunca TLS; `connect_tls` = obligatorio.
 - **Diferido**: parámetros binarios/tipados, sentencias preparadas con estado, COPY, `sslmode`
   negociable.
+
+### `db/sessions` (M350)
+
+El backend SQLite del almacén de sesiones de `web` (`net/session_store`): `sessions.sqlite(conn,
+ttl_s) -> Result<SessionStore, string>` crea la tabla `ray_sessions(sid, key, value, expires_at)`
+y la sirve desde una fibra dueña de la conexión; `web.sessions_with(store)` la enchufa. TTL
+deslizante, barrido cada minuto. Varias réplicas sobre el mismo archivo comparten las sesiones.
 
 ### `db/sqlite` (M53.4)
 

@@ -1,9 +1,9 @@
 # Manifiesto del paquete-librería `db` (sin entry; usa net/scram y net/time).
 [package]
 name = "db"
-version = "0.3.0"
+version = "0.4.0"
 license = "Apache-2.0"
 entry = "postgres.ray"
 
 [dependencies]
-net = "git+https://github.com/ray-language/net@v0.6.0"
+net = "git+https://github.com/ray-language/net@v0.7.0"
