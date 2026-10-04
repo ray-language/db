@@ -12,6 +12,16 @@
 // `"ROLLBACK"`. Las celdas llegan como texto (INTEGER/REAL → repr decimal, NULL → "", BLOB → hex).
 /// An open SQLite database. The handle lives in the host's process registry (like file handles);
 /// `disconnect` closes it. `":memory:"` opens an in-memory database.
+///
+/// **Fibers and threads.** A `Conn` may be used from any fiber or task, VM and native alike: the
+/// runtime serializes every `exec`/`query` on the handle (each call holds the registry lock for
+/// its whole prepare→bind→step→finalize cycle; no statement outlives a call). Two consequences:
+/// a single `Conn` shared by many fibers is SAFE but gives no parallelism (calls queue up), and a
+/// multi-statement transaction (`BEGIN` … `COMMIT`) is only yours if no other fiber touches the
+/// same `Conn` in between — give each transaction its own connection. For concurrent fibers use
+/// `net/pool` (`pool.new<Conn>(n)` + `pool.run`, one `Conn` per slot, dialed with `connect`);
+/// SQLite itself locks the file per write, so reads scale and writes serialize. The bundled
+/// SQLite runs in its serialized threading mode.
 pub struct Conn {
     handle: int,
 }
@@ -50,7 +60,8 @@ pub fn exec(c: Conn, sql: string, params: [string]) -> Result<int, string> {
 }
 
 /// Runs a query with positional parameters and returns all rows as text cells
-/// (NULL becomes `""`, BLOB becomes hex).
+/// (NULL becomes `""`, BLOB becomes hex). A `NULL` is therefore indistinguishable from an empty
+/// string here: use `query_opt` when the difference matters.
 pub fn query(c: Conn, sql: string, params: [string]) -> Result<[[string]], string> {
     let r = __sqlite_query(c.handle, sql, params);
     if (r[0] != "ok") {
@@ -74,6 +85,43 @@ pub fn query(c: Conn, sql: string, params: [string]) -> Result<[[string]], strin
         while (j < ncols) {
             row.push(r[i + j]);
             j = j + 1;
+        }
+        rows.push(row);
+        i = i + ncols;
+    }
+    Result.Ok(rows)
+}
+
+// M347 (rayauth R6): la misma consulta, pero distinguiendo NULL — el primitivo añade una máscara de
+// 'n'/'v' por celda delante de las celdas.
+/// Like `query`, but every cell is an `Option<string>`: `None` for SQL `NULL`, `Some(text)`
+/// otherwise (same text conversion as `query`). The way to tell a NULL from an empty string.
+pub fn query_opt(c: Conn, sql: string, params: [string]) -> Result<[[Option<string>]], string> {
+    let r = __sqlite_query_nulls(c.handle, sql, params);
+    if (r[0] != "ok") {
+        return Result.Err(r[1]);
+    }
+    // r = ["ok", ncols, mask, celda0, celda1, …]; mask[k] == 'n' ⇔ la celda k era NULL.
+    let ncols = match (parse_int(r[1])) {
+        Option.Some(n) => n,
+        Option.None => {
+            return Result.Err("corrupt SQLite response: " + r[1]);
+        },
+    };
+    let mask = r[2];
+    var rows: [[Option<string>]] = [];
+    if (ncols == 0) {
+        return Result.Ok(rows);
+    }
+    var i = 3;
+    var k = 0;
+    while (i < r.len()) {
+        var row: [Option<string>] = [];
+        var j = 0;
+        while (j < ncols) {
+            row.push(if (mask[k] == 'n') { Option.None } else { Option.Some(r[i + j]) });
+            j = j + 1;
+            k = k + 1;
         }
         rows.push(row);
         i = i + ncols;

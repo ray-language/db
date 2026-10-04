@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.2.1"
+> db = "^0.3.0"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.2.1"`.
+> `db = "git+https://github.com/ray-language/db@v0.3.0"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -22,12 +22,20 @@ Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net
 
 ## Cómo usarlo
 
-Declara el paquete en tu `ray.toml` (por ruta en el monorepo; git desde el espejo publicado):
+Añádelo desde el índice de paquetes:
+
+```sh
+ray add db
+```
+
+Queda declarado en tu `ray.toml` (y fijado en `ray.lock`):
 
 ```toml
 [dependencies]
-db = "git+https://github.com/ray-language/db@v0.2.1"
+db = "^0.2.1"
 ```
+
+Dentro del monorepo de raylang, los ejemplos y tests pueden usar la ruta (`db = "path:../ruta/a/packages/db"`).
 
 ## Módulos
 
@@ -169,6 +177,9 @@ fn main() -> int {
   crash: el ciclo prepare→step→finalize ocurre entero dentro del host, un statement nunca escapa).
 - **`last_insert_rowid(c)`** devuelve el rowid del último INSERT (misma conexión). Para el modo
   WAL: `query(c, "PRAGMA journal_mode=WAL", [])` (los PRAGMA que devuelven fila van por `query`).
+- **`NULL`** (M347): `query` devuelve texto y un `NULL` sale como `""`; `query_opt(c, sql, params) ->
+  Result<[[Option<string>]], string>` lo distingue (`None`). Un `Conn` sirve desde varias fibras (el
+  runtime serializa cada llamada); una transacción quiere su propia conexión.
 - **No disponible en el playground web** (wasm no compila la librería C).
 
 ### `db/bson` (M54.1)
