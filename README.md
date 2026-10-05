@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.5.0"
+> db = "^0.5.1"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.5.0"`.
+> `db = "git+https://github.com/ray-language/db@v0.5.1"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
