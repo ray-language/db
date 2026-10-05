@@ -9,11 +9,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.4.0"
+> db = "^0.5.0"
 > ```
 >
 > Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.4.0"`.
+> `db = "git+https://github.com/ray-language/db@v0.5.0"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -141,12 +141,15 @@ fn main() -> int {
 - **Diferido**: parámetros binarios/tipados, sentencias preparadas con estado, COPY, `sslmode`
   negociable.
 
-### `db/sessions` (M350)
+### `db/sessions` (M350, M352)
 
-El backend SQLite del almacén de sesiones de `web` (`net/session_store`): `sessions.sqlite(conn,
-ttl_s) -> Result<SessionStore, string>` crea la tabla `ray_sessions(sid, key, value, expires_at)`
-y la sirve desde una fibra dueña de la conexión; `web.sessions_with(store)` la enchufa. TTL
-deslizante, barrido cada minuto. Varias réplicas sobre el mismo archivo comparten las sesiones.
+Los backends de base de datos del almacén de sesiones de `web` (`net/session_store`), con el mismo
+actor y el mismo esquema `ray_sessions(sid, key, value, expires_at)`: `sessions.sqlite(conn, ttl_s)`,
+`sessions.postgres(conn, ttl_s)` y `sessions.postgres_pool(pool, ttl_s)` (cada orden toma una conexión
+del pool; sobrevive a un reinicio de la base). `web.sessions_with(store)` los enchufa. TTL deslizante,
+barrido cada minuto. SQL portable (sin `ON CONFLICT` ni `IF NOT EXISTS`): vale en PostgreSQL antiguos
+hasta donde llega el cliente (SCRAM-SHA-256: PostgreSQL ≥ 10). Varias réplicas sobre la misma base
+comparten las sesiones.
 
 ### `db/sqlite` (M53.4)
 
