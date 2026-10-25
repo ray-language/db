@@ -1,19 +1,17 @@
 # `db` — clientes de bases de datos (paquete adicional, **no** embebido)
 
-> **Espejo de solo lectura** — publicado desde
-> [`raylang/packages/db`](https://github.com/ray-language/raylang/tree/main/packages/db);
-> el desarrollo y los PRs van al monorepo.
+> **Read-only mirror** — published from [`https://github.com/ray-language/raylang/tree/main/packages/db`](https://github.com/ray-language/raylang/tree/main/packages/db); development and pull requests go there.
 >
-> **Instalación** — `ray add db` en tu proyecto (el índice oficial va por defecto), o a
-> mano en `ray.toml`:
+> **Install** — `ray add db` in your project (the official index is the default), or by
+> hand in `ray.toml`:
 >
 > ```toml
 > [dependencies]
-> db = "^0.5.1"
+> db = "^0.5.2"
 > ```
 >
-> Sin índice, la dependencia git directa:
-> `db = "git+https://github.com/ray-language/db@v0.5.1"`.
+> Without an index, the direct git dependency:
+> `db = "git+https://github.com/ray-language/db@v0.5.2"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -183,6 +181,11 @@ fn main() -> int {
   `query`/`exec` con `params: [string]` (marcadores **`?1`, `?2`, …** enlazados aparte del SQL →
   anti-inyección), `disconnect`. Transacciones = SQL corriente (`BEGIN`/`COMMIT`/`ROLLBACK`).
 - **Celdas como texto** (misma convención): INTEGER/REAL → repr decimal, `NULL` → `""`, BLOB → hex.
+  Para distinguir un `NULL` de la cadena vacía, `query_opt` devuelve `[[Option<string>]]`.
+- **`exec` con varias sentencias** (0.5.2, raylang 1.27.80): sin parámetros corre TODAS en orden,
+  como un script de migración, y descarta las filas de un `PRAGMA` o `SELECT`; con parámetros
+  exige una sola y lo comprueba antes de ejecutar nada. Antes corría solo la primera y devolvía
+  `Ok`. Si una falla, las anteriores quedan aplicadas: envuelve el script en `BEGIN; …; COMMIT;`.
 - `disconnect` libera el handle; usar la conexión después falla **limpio** (error como valor, no
   crash: el ciclo prepare→step→finalize ocurre entero dentro del host, un statement nunca escapa).
 - **`last_insert_rowid(c)`** devuelve el rowid del último INSERT (misma conexión). Para el modo
