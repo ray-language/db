@@ -7,11 +7,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.8.0"
+> db = "^0.8.1"
 > ```
 >
 > Without an index, the direct git dependency:
-> `db = "git+https://github.com/ray-language/db@v0.8.0"`.
+> `db = "git+https://github.com/ray-language/db@v0.8.1"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -245,7 +245,9 @@ con pérdida > 2^53, `ObjectId`/`Bin` → hex, orden de campos perdido).
 Cliente MongoDB en raylang puro sobre `db/bson`: framing **OP_MSG** (opCode 2013),
 `connect(host, port, user, password, database, nonce)` con `hello` + **SCRAM-SHA-256 vía SASL**
 (reusa `net/scram`, el mismo mecanismo que PostgreSQL; verifica la firma del servidor), CRUD
-completo y `run_command(c, doc)` para cualquier otro comando.
+completo y `run_command(c, doc)` para cualquier otro comando (`count`, `listCollections`…): corre
+en la base de la conexión —añade `$db` si el documento no lo trae— y un `ok: 0` del servidor es
+`Err("mongo: …")`.
 
 ```rust
 import db/mongo;
