@@ -7,11 +7,11 @@
 >
 > ```toml
 > [dependencies]
-> db = "^0.10.1"
+> db = "^0.10.2"
 > ```
 >
 > Without an index, the direct git dependency:
-> `db = "git+https://github.com/ray-language/db@v0.10.1"`.
+> `db = "git+https://github.com/ray-language/db@v0.10.2"`.
 
 
 Clientes de bases de datos **escritos en raylang** sobre los sockets de `std/net` y la cripto de
@@ -46,6 +46,11 @@ texto (`2.5e-300` como 300 decimales, un FLOAT con las 17 cifras del double, `DA
 cortas (6 significativas en FLOAT), notación científica fuera de 1e-15..1e15, y la fracción de
 segundo con los decimales declarados de la columna. **`connect_timeout`** y
 **`connect_tls_timeout`** (raycdc #472) acotan el connect y el handshake.
+
+0.10.2: un `connect` cuyo handshake falla o vence **cierra el socket**; con parámetros, un
+DOUBLE ≥ 1e15 con parte fraccionaria sale en decimal (`1000000000000000.5`) y el cero negativo
+sale `-0`, como por el protocolo de texto; una fecha u hora sin decimales declarados que trae
+microsegundos los conserva. `mongo.run_command_seq` arma el mensaje con una sola copia del lote.
 
 0.10.0 (raycdc #401): **acceso de bajo nivel a la sesión** para los comandos que el cliente no
 envuelve (una réplica: `COM_REGISTER_SLAVE`, `COM_BINLOG_DUMP`). `command(c, payload)` envía un
